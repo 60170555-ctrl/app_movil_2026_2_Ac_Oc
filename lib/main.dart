@@ -23,7 +23,7 @@ class MiPantalla extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bienvenidos a primera pantalla'),
+        title: const Text('Mi Bodega'),
       ),
       body: Center(
         child: Column(

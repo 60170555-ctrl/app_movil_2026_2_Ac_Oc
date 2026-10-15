@@ -56,6 +56,7 @@ class RegistroPage extends StatefulWidget {
 class _RegistroPageState extends State<RegistroPage> {
   final _formKey = GlobalKey<FormState>();
   final _nombreCtrl = TextEditingController();
+  final _usuarioCtrl = TextEditingController();
   final _correoCtrl = TextEditingController();
   final _dniCtrl = TextEditingController();
   final _celularCtrl = TextEditingController();
@@ -66,6 +67,7 @@ class _RegistroPageState extends State<RegistroPage> {
   @override
   void dispose() {
     _nombreCtrl.dispose();
+    _usuarioCtrl.dispose();
     _correoCtrl.dispose();
     _dniCtrl.dispose();
     _celularCtrl.dispose();
@@ -78,6 +80,28 @@ class _RegistroPageState extends State<RegistroPage> {
     if (texto.length < 3) return 'Escribe al menos 3 caracteres';
     if (!RegExp(r'^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$').hasMatch(texto)) {
       return 'Usa solo letras y espacios';
+    }
+    return null;
+  }
+
+  // Validador redactado con apoyo de IA, revisado y probado por mí
+  String? validarNombreUsuario(String? valor) {
+    final texto = valor?.trim() ?? '';
+
+    if (texto.isEmpty) {
+      return 'El nombre de usuario es obligatorio';
+    }
+    if (texto.length < 4) {
+      return 'Debe tener al menos 4 caracteres';
+    }
+    if (texto.length > 15) {
+      return 'No puede superar los 15 caracteres';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(texto)) {
+      return 'Solo se permiten letras sin tildes, números y guion bajo (_)';
+    }
+    if (RegExp(r'^[0-9]').hasMatch(texto)) {
+      return 'No puede empezar con un número';
     }
     return null;
   }
@@ -158,6 +182,17 @@ class _RegistroPageState extends State<RegistroPage> {
                   });
                 },
                 onSaved: (valor) => _datos['nombre'] = valor!.trim(),
+              ),
+              const SizedBox(height: 16),
+              // Sin inputFormatters a propósito, para poder probar los casos inválidos
+              TextFormField(
+                controller: _usuarioCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de usuario',
+                  prefixIcon: Icon(Icons.alternate_email),
+                ),
+                validator: validarNombreUsuario,
+                onSaved: (valor) => _datos['usuario'] = valor!.trim(),
               ),
               const SizedBox(height: 16),
               TextFormField(

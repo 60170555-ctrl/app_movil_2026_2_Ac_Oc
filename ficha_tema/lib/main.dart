@@ -4,30 +4,36 @@ import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(const MiApp());
 
+// ===========================================================================
+// APP PRINCIPAL
+// ===========================================================================
 class MiApp extends StatelessWidget {
   const MiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final baseTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF12314D),
+      ).copyWith(
+        primary: const Color(0xFF12314D),
+        onPrimary: Colors.white,
+        primaryContainer: const Color(0xFF12314D),
+        onPrimaryContainer: Colors.white,
+        surface: const Color(0xFFF6F9FB),
+        onSurface: const Color(0xFF12314D),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
+      ),
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Anticipa Azángaro',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF12314D),
-        ).copyWith(
-          primary: const Color(0xFF12314D),
-          onPrimary: Colors.white,
-          primaryContainer: const Color(0xFF12314D),
-          onPrimaryContainer: Colors.white,
-          surface: const Color(0xFFF6F9FB),
-          onSurface: const Color(0xFF12314D),
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-        textTheme: GoogleFonts.interTextTheme(),
+      theme: baseTheme.copyWith(
+        textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -41,17 +47,411 @@ class MiApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),
       themeMode: ThemeMode.system,
-      // Parte B: rutas con nombre (home desaparece y se usa initialRoute)
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const RegistroPage(),
-        '/segunda': (context) => const SegundaPantalla(),
-        '/tercera': (context) => const TerceraPantalla(),
-      },
+      initialRoute: AppRoutes.home,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }
 
+// ===========================================================================
+// MODELO: argumentos que se envían a la pantalla de detalle
+// (equivalente a lib/models/product_args.dart)
+// ===========================================================================
+class ProductArgs {
+  const ProductArgs({
+    required this.name,
+    required this.price,
+    required this.description,
+  });
+
+  final String name;
+  final double price;
+  final String description;
+}
+
+// ===========================================================================
+// RUTAS CENTRALIZADAS
+// (equivalente a lib/routes/app_routes.dart)
+// ===========================================================================
+class AppRoutes {
+  AppRoutes._();
+
+  static const String home = '/';
+  static const String detail = '/detalle';
+  static const String quantity = '/cantidad';
+  static const String register = '/registro';
+
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case home:
+        return MaterialPageRoute<void>(
+          builder: (_) => const HomeScreen(),
+          settings: settings,
+        );
+
+      case detail:
+        final args = settings.arguments;
+        if (args is ProductArgs) {
+          return MaterialPageRoute<void>(
+            builder: (_) => DetailScreen(args: args),
+            settings: settings,
+          );
+        }
+        return _errorRoute(
+          'La ruta $detail requiere un objeto ProductArgs válido.',
+        );
+
+      case quantity:
+        return MaterialPageRoute<int>(
+          builder: (_) => const QuantityScreen(),
+          settings: settings,
+        );
+
+      case register:
+        return MaterialPageRoute<void>(
+          builder: (_) => const RegistroPage(),
+          settings: settings,
+        );
+
+      default:
+        return _errorRoute('Ruta no encontrada: ${settings.name}');
+    }
+  }
+
+  static Route<dynamic> _errorRoute(String message) {
+    return MaterialPageRoute<void>(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Error de navegación')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// WIDGET REUTILIZABLE: ProductCard
+// NO conoce rutas: el comportamiento al tocar lo decide quien lo usa
+// mediante [onTap].
+// (equivalente a lib/widgets/product_card.dart)
+// ===========================================================================
+class ProductCard extends StatelessWidget {
+  const ProductCard({
+    super.key,
+    required this.name,
+    required this.price,
+    this.onTap,
+  });
+
+  final String name;
+  final double price;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: const Icon(Icons.shopping_basket_outlined),
+        title: Text(name, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text('S/ ${price.toStringAsFixed(2)}'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// WIDGET REUTILIZABLE: SectionTitle
+// Título de sección con el estilo y color del tema.
+// (equivalente a lib/widgets/section_title.dart)
+// ===========================================================================
+class SectionTitle extends StatelessWidget {
+  const SectionTitle(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+    );
+  }
+}
+
+// ===========================================================================
+// WIDGET REUTILIZABLE: QuantitySelector
+// Sin estado propio: el valor vive en la pantalla que lo usa (el estado
+// "sube" al padre) y este widget solo notifica con [onChanged].
+// (equivalente a lib/widgets/quantity_selector.dart)
+// ===========================================================================
+class QuantitySelector extends StatelessWidget {
+  const QuantitySelector({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.min = 1,
+    this.max = 20,
+  });
+
+  final int value;
+  final ValueChanged<int> onChanged;
+  final int min;
+  final int max;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton.filledTonal(
+          onPressed: value > min ? () => onChanged(value - 1) : null,
+          icon: const Icon(Icons.remove),
+        ),
+        const SizedBox(width: 24),
+        Text(
+          '$value',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(width: 24),
+        IconButton.filledTonal(
+          onPressed: value < max ? () => onChanged(value + 1) : null,
+          icon: const Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// PANTALLA: HomeScreen  (equivalente a lib/screens/home_screen.dart)
+// ===========================================================================
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  static const List<ProductArgs> productos = [
+    ProductArgs(
+      name: 'Quinua orgánica 1 kg',
+      price: 12.50,
+      description: 'Quinua del altiplano puneño.',
+    ),
+    ProductArgs(
+      name: 'Chuño blanco 500 g',
+      price: 9.00,
+      description: 'Chuño blanco de producción local.',
+    ),
+    ProductArgs(
+      name: 'Queso paria 250 g',
+      price: 11.00,
+      description: 'Queso paria artesanal.',
+    ),
+    ProductArgs(
+      name: 'Miel de abeja 350 ml',
+      price: 18.00,
+      description: 'Miel de abeja pura.',
+    ),
+  ];
+
+  void _abrirDetalle(BuildContext context, ProductArgs producto) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.detail,
+      arguments: producto,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Vilca Market')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const SectionTitle('Productos de la región'),
+          const SizedBox(height: 8),
+          for (final producto in productos)
+            ProductCard(
+              name: producto.name,
+              price: producto.price,
+              onTap: () => _abrirDetalle(context, producto),
+            ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+            icon: const Icon(Icons.person_add_alt_1),
+            label: const Text('Ir al registro'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// PANTALLA: DetailScreen  (equivalente a lib/screens/detail_screen.dart)
+// ===========================================================================
+class DetailScreen extends StatefulWidget {
+  const DetailScreen({super.key, required this.args});
+
+  final ProductArgs args;
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  int _quantity = 1;
+
+  Future<void> _chooseQuantity() async {
+    final int? result =
+        await Navigator.pushNamed<int>(context, AppRoutes.quantity);
+
+    if (!mounted) return;
+
+    if (result != null) {
+      setState(() => _quantity = result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cantidad actualizada: $result')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final producto = widget.args;
+    final total = producto.price * _quantity;
+
+    return Scaffold(
+      appBar: AppBar(title: Text(producto.name)),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Icon(Icons.inventory_2_outlined, size: 88),
+          const SizedBox(height: 20),
+          Text(
+            producto.name,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Center(child: SectionTitle('Descripción del producto')),
+          const SizedBox(height: 8),
+          Text(producto.description, textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _dato('Precio unitario',
+                      'S/ ${producto.price.toStringAsFixed(2)}'),
+                  const Divider(height: 24),
+                  _dato('Cantidad seleccionada', '$_quantity'),
+                  const Divider(height: 24),
+                  _dato(
+                    'Total',
+                    'S/ ${total.toStringAsFixed(2)}',
+                    destacado: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _chooseQuantity,
+            icon: const Icon(Icons.add_shopping_cart),
+            label: const Text('Elegir cantidad'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dato(String titulo, String valor, {bool destacado = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(child: Text(titulo)),
+        const SizedBox(width: 12),
+        Text(
+          valor,
+          style: TextStyle(
+            fontWeight: destacado ? FontWeight.bold : FontWeight.normal,
+            fontSize: destacado ? 18 : 16,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// PANTALLA: QuantityScreen  (equivalente a lib/screens/quantity_screen.dart)
+// ===========================================================================
+class QuantityScreen extends StatefulWidget {
+  const QuantityScreen({super.key});
+
+  @override
+  State<QuantityScreen> createState() => _QuantityScreenState();
+}
+
+class _QuantityScreenState extends State<QuantityScreen> {
+  int _quantity = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Seleccionar cantidad')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('¿Cuántas unidades deseas?'),
+              const SizedBox(height: 20),
+              QuantitySelector(
+                value: _quantity,
+                onChanged: (nueva) => setState(() => _quantity = nueva),
+                min: 1,
+                max: 20,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop<int>(context, _quantity),
+                  child: const Text('Confirmar'),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop<int>(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// PANTALLA: RegistroPage  (equivalente a lib/screens/registro_screen.dart)
+// ===========================================================================
 class RegistroPage extends StatefulWidget {
   const RegistroPage({super.key});
 
@@ -90,7 +490,6 @@ class _RegistroPageState extends State<RegistroPage> {
     return null;
   }
 
-  // Validador redactado con apoyo de IA, revisado y probado por mí
   String? validarNombreUsuario(String? valor) {
     final texto = valor?.trim() ?? '';
 
@@ -128,8 +527,6 @@ class _RegistroPageState extends State<RegistroPage> {
     return null;
   }
 
-  // Celular opcional: vacío es válido. Si se escribe, debe tener 9 dígitos
-  // y empezar con 9. Ajustado por mí a partir de la propuesta de IA.
   String? _validarCelular(String? valor) {
     final texto = valor?.trim() ?? '';
     if (texto.isEmpty) return null; // opcional: vacío es válido
@@ -193,7 +590,6 @@ class _RegistroPageState extends State<RegistroPage> {
                 onSaved: (valor) => _datos['nombre'] = valor!.trim(),
               ),
               const SizedBox(height: 16),
-              // Sin inputFormatters a propósito, para poder probar los casos inválidos
               TextFormField(
                 controller: _usuarioCtrl,
                 decoration: const InputDecoration(
@@ -233,7 +629,6 @@ class _RegistroPageState extends State<RegistroPage> {
                 onSaved: (valor) => _datos['dni'] = valor!,
               ),
               const SizedBox(height: 16),
-              // Campo opcional: puede quedar vacío
               TextFormField(
                 controller: _celularCtrl,
                 keyboardType: TextInputType.phone,
@@ -257,65 +652,8 @@ class _RegistroPageState extends State<RegistroPage> {
                   label: const Text('Registrarme'),
                 ),
               ),
-              // ---- Ficha de navegación, Parte B (botón temporal) ----
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/segunda'),
-                  child: const Text('Ir a la pantalla 2'),
-                ),
-              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Ficha de navegación: Pantalla 2 y Pantalla 3
-// ---------------------------------------------------------------------------
-
-class SegundaPantalla extends StatelessWidget {
-  const SegundaPantalla({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pantalla 2')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Volver'),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () => Navigator.pushNamed(context, '/tercera'),
-              child: const Text('Ir a la pantalla 3'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class TerceraPantalla extends StatelessWidget {
-  const TerceraPantalla({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pantalla 3')),
-      body: Center(
-        child: FilledButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Volver'),
         ),
       ),
     );

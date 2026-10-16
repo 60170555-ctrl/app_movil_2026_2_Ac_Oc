@@ -41,7 +41,13 @@ class MiApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),
       themeMode: ThemeMode.system,
-      home: const RegistroPage(),
+      // Parte B: rutas con nombre (home desaparece y se usa initialRoute)
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const RegistroPage(),
+        '/segunda': (context) => const SegundaPantalla(),
+        '/tercera': (context) => const TerceraPantalla(),
+      },
     );
   }
 }
@@ -122,9 +128,12 @@ class _RegistroPageState extends State<RegistroPage> {
     return null;
   }
 
+  // Celular opcional: vacío es válido. Si se escribe, debe tener 9 dígitos
+  // y empezar con 9. Ajustado por mí a partir de la propuesta de IA.
   String? _validarCelular(String? valor) {
-    final texto = valor ?? '';
-    if (texto.isEmpty) return 'Ingresa tu número de celular';
+    final texto = valor?.trim() ?? '';
+    if (texto.isEmpty) return null; // opcional: vacío es válido
+    if (!RegExp(r'^\d+$').hasMatch(texto)) return 'Usa solo dígitos';
     if (texto.length != 9) return 'El celular debe tener 9 dígitos';
     if (!texto.startsWith('9')) return 'El celular debe empezar con 9';
     return null;
@@ -224,6 +233,7 @@ class _RegistroPageState extends State<RegistroPage> {
                 onSaved: (valor) => _datos['dni'] = valor!,
               ),
               const SizedBox(height: 16),
+              // Campo opcional: puede quedar vacío
               TextFormField(
                 controller: _celularCtrl,
                 keyboardType: TextInputType.phone,
@@ -232,11 +242,11 @@ class _RegistroPageState extends State<RegistroPage> {
                   LengthLimitingTextInputFormatter(9),
                 ],
                 decoration: const InputDecoration(
-                  labelText: 'Celular',
+                  labelText: 'Celular (opcional)',
                   prefixIcon: Icon(Icons.phone_outlined),
                 ),
                 validator: _validarCelular,
-                onSaved: (valor) => _datos['celular'] = valor!,
+                onSaved: (valor) => _datos['celular'] = valor!.trim(),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -247,8 +257,65 @@ class _RegistroPageState extends State<RegistroPage> {
                   label: const Text('Registrarme'),
                 ),
               ),
+              // ---- Ficha de navegación, Parte B (botón temporal) ----
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/segunda'),
+                  child: const Text('Ir a la pantalla 2'),
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ficha de navegación: Pantalla 2 y Pantalla 3
+// ---------------------------------------------------------------------------
+
+class SegundaPantalla extends StatelessWidget {
+  const SegundaPantalla({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pantalla 2')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Volver'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => Navigator.pushNamed(context, '/tercera'),
+              child: const Text('Ir a la pantalla 3'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TerceraPantalla extends StatelessWidget {
+  const TerceraPantalla({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pantalla 3')),
+      body: Center(
+        child: FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Volver'),
         ),
       ),
     );

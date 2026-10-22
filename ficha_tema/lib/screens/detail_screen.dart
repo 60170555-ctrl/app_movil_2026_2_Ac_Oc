@@ -20,7 +20,8 @@ class _DetailScreenState extends State<DetailScreen> {
     final int? result =
         await Navigator.pushNamed<int>(context, AppRoutes.quantity);
 
-    if (!mounted) return;
+    // ⚠️ ERROR 5 INTENCIONAL: falta "if (!mounted) return;"
+    // flutter analyze marcara: use_build_context_synchronously
 
     if (result != null) {
       setState(() => _quantity = result);

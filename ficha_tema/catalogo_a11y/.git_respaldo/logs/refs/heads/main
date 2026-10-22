@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7c2da5bf290fe4c57f093f52d05daf2e58eb0d92 Anail Ochochoque Calcina <60170555@tecnologicoazangaro.com> 1792670214 -0500	commit (initial): sesion-07: correcciones de accesibilidad del catálogo
+7c2da5bf290fe4c57f093f52d05daf2e58eb0d92 5459c14e855a43c2ada560209a71547091c4ee49 Anail Sorayda <60170555@tecnologicoazangaro.com> 1792671426 -0500	commit: sesion-07: correcciones de accesibilidad del catálogo
+5459c14e855a43c2ada560209a71547091c4ee49 4a14bfd960b829b29b010b2e8f8c3c4b56b92a27 Anail Sorayda <60170555@tecnologicoazangaro.com> 1792672970 -0500	commit: sesion-07: correcciones de accesibilidad del catálogo
+4a14bfd960b829b29b010b2e8f8c3c4b56b92a27 956173cf63e5a6dc131ee5dee5dfc09a36e321c7 Anail Sorayda <60170555@tecnologicoazangaro.com> 1792674337 -0500	commit: ficha2: migrar contador de setState a Provider

@@ -6,7 +6,7 @@ void main() {
   testWidgets('La pantalla cumple las guías de accesibilidad', (tester) async {
     final handle = tester.ensureSemantics();
     await tester.pumpWidget(
-      const MaterialApp(home: CatalogoDefectuoso()),
+      const MaterialApp(home: PantallaHeladas()),
     );
 
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));

@@ -1,4 +1,3 @@
-@'
 import 'package:flutter/material.dart';
 
 void main() => runApp(const MaterialApp(home: CatalogoDefectuoso()));
@@ -8,28 +7,33 @@ class CatalogoDefectuoso extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // H2 y H5: contraste ≈ 10:1 y texto de 14 sp
+    const estilo = TextStyle(fontSize: 14, color: Color(0xFF424242));
+
     return Scaffold(
       appBar: AppBar(title: const Text('Vilca Market')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Container(
-              width: 380,
-              padding: const EdgeInsets.all(12),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  const Text('Arroz 1 kg',
-                      style: TextStyle(fontSize: 11, color: Color(0xFFBDBDBD))),
-                  const SizedBox(width: 20),
-                  const Text('S/ 4.80',
-                      style: TextStyle(fontSize: 11, color: Color(0xFFBDBDBD))),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(Icons.add, size: 16),
-                  ),
-                ],
+            // H1: Expanded en vez de width fijo de 380 (sin overflow)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                color: Colors.white,
+                child: Row(
+                  children: [
+                    const Expanded(child: Text('Arroz 1 kg', style: estilo)),
+                    const SizedBox(width: 20),
+                    const Text('S/ 4.80', style: estilo),
+                    // H3 y H4: IconButton (48×48 dp) con nombre accesible
+                    IconButton(
+                      tooltip: 'Agregar Arroz 1 kg al carrito',
+                      icon: const Icon(Icons.add),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -38,4 +42,3 @@ class CatalogoDefectuoso extends StatelessWidget {
     );
   }
 }
-'@ | Set-Content -Encoding utf8 lib/main.dart
